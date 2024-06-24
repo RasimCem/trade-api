@@ -37,22 +37,15 @@ const login = async (req, res) => {
 }
 
 const me = async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token == null) {
-        return res.status(401).json({ message: 'Token is missing' });
+    try {
+        decoded = req.user;
+        const user = await User.findByPk(decoded.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        user.password = undefined;
+        res.status(200).json({ user });
+    } catch (error) {
+        res.status(500).json({ error: 'Error while fetching a user.' });
     }
-    jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decoded) => {
-        if (err) return res.status(403).json({ message: 'Token is invalid or expired' });
-        try {
-            console.log(decoded);
-            const user = await User.findByPk(decoded.id);
-            if (!user) return res.status(404).json({ message: 'User not found' });
-            res.status(200).json({ user });
-        } catch (error) {
-            res.status(500).json({ error: 'Error while fetching a user.' });
-        }
-    });
 }
 
 
